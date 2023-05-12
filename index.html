@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>NUB GPA Prediction</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', 'Segoe UI', 'Segoe UI';
+      background-color: #f4f4f4;
+    }
+
+    .login {
+      max-width: 600px;
+      width: 90%; /* Adjust width for responsiveness */
+      margin: 0 auto; /* Center horizontally */
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .login h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .form-group {
+      margin-bottom: 10px; /* Reduce margin for compact layout */
+    }
+
+    .btn-primary {
+      width: 100%;
+      margin-bottom: 10px; /* Add margin between buttons */
+    }
+
+    .prediction {
+      max-width: 600px;
+      width: 90%;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .prediction h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .prediction p {
+      text-align: center;
+      font-size: 16px;
+      margin-top: 10px;
+      color: #555;
+    }
+
+    .notification {
+      background-color: #2ecc71;
+      color: #fff;
+      padding: 12px;
+      border-radius: 4px;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      z-index: 9999;
+    }
+    .login-footer {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="login">
+      <h1>GPA Prediction Based On Your Performance</h1>
+      <!-- Main Input Form -->
+      <form action="{{ url_for('predict') }}" method="post">
+        <div class="form-group">
+          <select class="form-control" name="data_option" id="dataOptionSelect">
+            <option value="manual">Enter Data Manually</option>
+            <option value="retrieve">Retrieve Data</option>
+          </select>
+        </div>
+        <div class="form-group" id="numCoursesInputContainer">
+          <input type="number" class="form-control" name="num_courses" id="numCoursesInput" placeholder="Number of Courses" required>
+        </div>
+        <div id="courseForms">
+          <!-- Course forms will be dynamically added here based on the user input -->
+        </div>
+        <div class="form-group">
+          <button type="button" class="btn btn-primary" id="addCourseBtn">Add Course</button>
+          <button type="button" class="btn btn-primary" id="retrieveDataBtn">Retrieve Data</button>
+        </div>
+        <div class="form-group">
+          <button type="submit" class="btn btn-primary">Predict</button>
+        </div>
+      </form>
+      <div class="prediction">
+        <p>{{ prediction_text }}</p>
+      </div>
+      <div class="login-footer">
+        <p>© 2023 NUB University. All rights reserved.</p>
+      </div>
+    </div>
+      </div>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          var addCourseBtn = document.getElementById('addCourseBtn');
+          var retrieveDataBtn = document.getElementById('retrieveDataBtn');
+          var numCoursesInputContainer = document.getElementById('numCoursesInputContainer');
+          var courseForms = document.getElementById('courseForms');
+    
+          // By default, show the Add Course button
+          addCourseBtn.style.display = 'block';
+          retrieveDataBtn.style.display = 'none';
+          numCoursesInputContainer.style.display = 'block';
+    
+          document.getElementById('dataOptionSelect').addEventListener('change', function() {
+            var selectedOption = this.value;
+    
+            if (selectedOption === 'manual') {
+              addCourseBtn.style.display = 'block';
+              retrieveDataBtn.style.display = 'none';
+              numCoursesInputContainer.style.display = 'block';
+            } else if (selectedOption === 'retrieve') {
+              addCourseBtn.style.display = 'none';
+              retrieveDataBtn.style.display = 'block';
+              numCoursesInputContainer.style.display = 'none';
+            }
+          });
+    
+          addCourseBtn.addEventListener('click', function() {
+            var numCoursesInput = document.getElementById('numCoursesInput');
+            var numCourses = parseInt(numCoursesInput.value);
+    
+            courseForms.innerHTML = ''; // Clear previous course forms
+    
+            for (var i = 0; i < numCourses; i++) {
+              var courseNumber = i + 1;
+    
+              var courseForm = document.createElement('div');
+              courseForm.className = 'course-form';
+    
+              var heading = document.createElement('h3');
+              heading.textContent = 'Course ' + courseNumber;
+              courseForm.appendChild(heading);
+    
+              var quizInput = document.createElement('input');
+              quizInput.type = 'number';
+              quizInput.className = 'form-control';
+              quizInput.name = 'quiz' + courseNumber;
+              quizInput.placeholder = 'Quiz 1 Mark - From 0 to 5';
+              quizInput.min = '0';
+              quizInput.max = '5';
+              quizInput.required = true;
+              courseForm.appendChild(quizInput);
+    
+              var midInput = document.createElement('input');
+              midInput.type = 'number';
+              midInput.className = 'form-control';
+              midInput.name = 'mid' + courseNumber;
+              midInput.placeholder = 'Midterm Mark - From 0 to 25';
+              midInput.min = '0';
+              midInput.max = '25';
+              midInput.required = true;
+              courseForm.appendChild(midInput);
+    
+              courseForms.appendChild(courseForm);
+            }
+          });
+    
+          retrieveDataBtn.addEventListener('click', function() {
+            // Simulate data retrieval
+            var retrievedData = {
+              num_courses: 6,
+              course_data: [
+                { quiz1: 4, mid: 21 },
+                { quiz1: 3, mid: 22 },
+                { quiz1: 5, mid: 20 },
+                { quiz1: 2, mid: 17 },
+                { quiz1: 2, mid: 16 },
+                { quiz1: 3, mid: 23 }
+              ]
+            };
+    
+            var numCoursesInput = document.getElementById('numCoursesInput');
+            var retrievedNumCourses = retrievedData.num_courses;
+             // Update the number of courses input value
+             numCoursesInput.value= retrievedNumCourses;
+                 // Clear previous course forms
+    courseForms.innerHTML = '';
+
+// Generate new course forms based on the retrieved data
+for (var i = 0; i < retrievedNumCourses; i++) {
+  var courseNumber = i + 1;
+  var courseData = retrievedData.course_data[i];
+
+  var courseForm = document.createElement('div');
+  courseForm.className = 'course-form';
+
+  var heading = document.createElement('h3');
+  heading.textContent = 'Course ' + courseNumber;
+  courseForm.appendChild(heading);
+
+  var quizInput = document.createElement('input');
+  quizInput.type = 'number';
+  quizInput.className = 'form-control';
+  quizInput.name = 'quiz' + courseNumber;
+  quizInput.placeholder = 'Quiz 1 Mark - From 0 to 5';
+  quizInput.min = '0';
+  quizInput.max = '5';
+  quizInput.required = true;
+  quizInput.value = courseData.quiz1;
+  courseForm.appendChild(quizInput);
+
+  var midInput = document.createElement('input');
+  midInput.type = 'number';
+  midInput.className = 'form-control';
+  midInput.name = 'mid' + courseNumber;
+  midInput.placeholder = 'Midterm Mark - From 0 to 25';
+  midInput.min = '0';
+  midInput.max = '25';
+  midInput.required = true;
+  midInput.value = courseData.mid;
+  courseForm.appendChild(midInput);
+
+  courseForms.appendChild(courseForm);
+}
+});
+
+retrieveDataBtn.addEventListener('click', function() {
+// Simulate data retrieval
+var notification = document.createElement('div');
+notification.className = 'notification';
+notification.textContent = 'Data has been retrieved';
+
+document.body.appendChild(notification);
+
+setTimeout(function() {
+  document.body.removeChild(notification);
+}, 3000);
+});
+});
+
+</script>
+</body>
+</html>
